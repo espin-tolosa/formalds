@@ -226,7 +226,7 @@ double my_sqrt_imp( double x )
 	return yn;
 }
 
-float my_sqrt( float x )
+double my_sqrt( double x )
 {
 	double result;
 
@@ -237,7 +237,7 @@ float my_sqrt( float x )
 	else if ( xtype.is_nan						)	result = MY_NAN;
 	else 	  /* 0 < x <= MAX_FLOAT */				result = my_sqrt_imp( x );
 	
-	return (float) result; /* casting can't overflow because sqrt(x) < x */
+	return result; /* casting can't overflow because sqrt(x) < x */
 }
 
 double my_log_imp( double x )
@@ -274,7 +274,7 @@ double my_log_imp( double x )
 	return ( ( xn.esign*xn.e - gn.esign*gn.e ) * ln2 + yn );
 }
 
-double my_exp( float x )
+double my_exp( double x )
 {
 	double result;
 	
@@ -317,6 +317,15 @@ double my_exp_imp( double x )
 	return R * ( 1LLU << ( 1LLU + gn.e ) );
 }
 
+/* x**y = e**(yln(x)) */
+
+double my_pow_imp( double x, double y )
+{
+	const double w = y * my_log_imp( x ); /* TODO: replace by my_log( x ) */
+
+	return ( my_exp( w ) );
+}
+
 int main ( void )
 {
 	float x;
@@ -334,6 +343,8 @@ int main ( void )
 	x = 15.0; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
 	x = 20.0; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
 	x = 25.0; printf("EXP(%f): %f, %f\n",x, exp( x ), my_exp( x ));
+	
+	x = 25.0; printf("POW(%f, 7.0): %f, %f\n",x, pow( x, 7.0 ), my_pow_imp( x, 7.0 ));
 
 
 #if 0	
