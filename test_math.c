@@ -274,7 +274,7 @@ double my_log_imp( double x )
 	return ( ( xn.esign*xn.e - gn.esign*gn.e ) * ln2 + yn );
 }
 
-float my_exp( float x )
+double my_exp( float x )
 {
 	double result;
 	
@@ -290,29 +290,31 @@ float my_exp( float x )
 }
 
 /*
- * x = g + k * ln2; exp(x) = 2**k * exp(g)
+ * x = g + e * ln2; exp(x) = 2**e * exp(g)
  */
 
 double my_exp_imp( double x )
 {
-//	const double ln4 = 0.3862943611198906188344642429164;
-	const double ln2 = 0.69314718055994530941723212145818;
 	normalized_fp_t gn = normalize_exp( x );
 
 	double g = gn.f;
-	
-	double yn = 1.0;
-	double fac = 1.0;
-	
-	for( int i = 1; i < 10; ++i )
-	{
-		printf("exp %f, fac %f, %T = %f\n", yn/gn.f, fac, g / fac);
-		yn = yn + g / fac;
-		fac = fac * (double) i;
-		g  = g*g;
-	}
 
-	return yn * ( 1 << gn.e );
+	/* Cody & Waite, Chapter 6, page 69 */
+	const double p0 = 0.25000000000000000000e+0;
+	const double p1 = 0.75753180159422776666e-2;
+	const double p2 = 0.31555192765684646356e-4;
+	const double q0 = 0.50000000000000000000e+0;
+	const double q1 = 0.56817302698551221787e-1;
+	const double q2 = 0.63121894374398503557e-3;
+	const double q3 = 0.75104028399870046114e-6;
+
+	const double z = g * g;
+	
+	const double gP = ((p2 * z + p1) * z + p0 ) * g;
+	const double Q  = (q2 * z + q1) * z + q0;
+	const double R  = 0.5 + gP / ( Q - gP );
+
+	return R * ( 1LLU << ( 1LLU + gn.e ) );
 }
 
 int main ( void )
@@ -327,7 +329,12 @@ int main ( void )
 	x = -0.0001123; xn = normalize_exp( x );
 	printf("%f = %f + %d * ln(2) = %f\n", x, xn.f, xn.e, xn.fsign*(xn.e * log(2.0) + xn.f));
 
-	x = 4.5; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
+	x = 5.5; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
+	x = 10.0; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
+	x = 15.0; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
+	x = 20.0; printf("EXP(%f): %f, %f\n",x, expf( x ), my_exp( x ));
+	x = 25.0; printf("EXP(%f): %f, %f\n",x, exp( x ), my_exp( x ));
+
 
 #if 0	
 	x = 0.0f; y = get_type( x ); printf("%.1f\tis\tZERO=%d,\tINF=%d,\tNAN=%d,\tFINITE=%d,\tSIGN=:%c1\n",x, y.is_zero, y.is_inf, y.is_nan, y.is_finite, y.sign  );
