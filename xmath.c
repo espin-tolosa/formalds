@@ -1,3 +1,6 @@
+#include<time.h>
+#include<stdlib.h>
+
 /*
  * Model of Float and Double representation in a little endian machine
  *
@@ -97,7 +100,9 @@ static const double invsqrt2 = 0.70710678118654752440084436210485;
 #define DBIAS   0x03FE /* The value emax−1 is subtracted from the bits of the exponent of a double to obtain the fraction 0.FFF... */
 #define ONEHALF 0x3FE0 /* (DBIAS << DOFF) */
 #define SMASK   0x8000 /* A mask for the sign in D0 */
-#define MMASK   0x000F /* Amas for the four fractional bits (M) in D0 */
+#define MMASK   0x000F /* A mask for the four fractional bits (M) in D0 */
+#define DBL_EPS	2.22e-16 /* Machine epsilon around 1 */
+
 
 typedef union
 {
@@ -229,10 +234,10 @@ dnorm_t d_gnormalize ( double x )
 
 double my_sqrt_imp( double x )
 {
-	const double a = 0.42578;
-	const double b = 0.57422;
-	
-	double yn = a + b * x; /* Lyusternik 1965, first approximation of sqrt(x) */
+	static const double a = 0.42578;
+	static const double b = 0.57422;
+		
+	double yn = a + b * x; /* Lyusternik 1965 */
 
 	yn = 0.5 * ( yn + x / yn);
 	yn = 0.5 * ( yn + x / yn);
@@ -343,9 +348,35 @@ double d_exp( double x )
 	result.type 		= d_type( x );
 	result.f.w[ W0 ] 	= result.type;
 
-	if		( result.type == INF && x < 0 )	result.f.w[ W0 ] = ZERO;
-	
-	else 	  /* emin < x <= MAX_FLOAT */				result.f.d =  d_exp_imp( x );
+	switch( result.type )
+	{
+		case (FINITE):
+		{
+			result.f.d =  d_exp_imp( x );
+			break;
+		}
+
+		case (INF):
+		{
+			if( x < 0 ) result.f.w[ W0 ] = ZERO;
+			break;
+		}
+
+		case (ZERO):
+		{
+			result.f.d =  1.0;
+			break;
+		}
+
+		case (GRADZ):
+		{
+			result.f.d =  1.0;
+			break;
+		}
+
+
+		default: /* NOP */
+	}
 
 	return result.f.d;
 }
@@ -392,13 +423,157 @@ double d_log_imp( double x )
 	z = z * z * z;
 	yn = yn + z / 49811.282184751;
 
-	return ( ( /*xn.esign * */xn.e - /*gn.esign* */gn.e ) * ln2 + yn );
+	return ( ( xn.e - gn.e ) * ln2 + yn );
 }
 
 double d_log( double x )
 {
 	return d_log_imp( x );
 }
+
+/*
+ * ------------------------------------------
+ * |				SIN/COS					|
+ * ------------------------------------------
+ */
+
+#define MASK_COS 0x1
+#define MASK_SIN 0x2
+
+double _Poly(double x, const double *tab, int n)
+{	/* compute polynomial */
+	double y;
+
+	for (y = *tab; 0 <= --n; )
+		y = y * x + *++tab;
+	return (y);
+}
+
+double d_sin_impl(double x, u32_t qoff) /* qoff = 0 (sin), qoff = 1 (cos) */
+{
+	/* P.J Plauger */
+	static const double c[8] =
+	{
+		-0.000000000011470879,
+		 0.000000002087712071,
+		-0.000000275573192202,
+		 0.000024801587292937,
+		-0.001388888888888893,
+		 0.041666666666667325,
+		-0.500000000000000000,
+		 1.0,
+	};
+
+	static const double s[8] =
+	{
+		-0.000000000000764723,
+		 0.000000000160592578,
+		-0.000000025052108383,
+		 0.000002755731921890,
+		-0.000198412698412699,
+		 0.008333333333333372,
+		-0.166666666666666667,
+		 1.0,
+	};
+
+	static const double c1 = 3294198.0 / 2097152.0;
+	static const double c2 = 3.139164786504813217e-7;
+	static const double twobypi = 0.63661977236758134308;
+	static const double twopi = 6.28318530717958647693;
+
+	/* compute sin(x) or cos(x) */
+
+	double g 	= x * twobypi; // g = x / 0.5pi
+	long quad 	= (long)(0 < g ? g + 0.5 : g - 0.5); //
+
+//	if (x < -HUGE_RAD || HUGE_RAD < x)
+//	{
+//		g = x / twopi;
+//		_Dint(&g, 0);
+//		x -= g * twopi;
+//	}
+
+	qoff += (unsigned long)quad & 0x3;
+	g = (double)quad;
+	g = (x - g * c1) - g * c2;
+
+	if ((g < 0.0 ? -g : g) < DBL_EPS)
+	{
+		if (qoff & MASK_COS)
+			g = 1.0;
+	}
+
+	if (qoff & MASK_COS)
+	{
+		g = _Poly(g * g, c, 7);
+	}
+
+	else
+	{
+		g *= _Poly(g * g, s, 7);
+	}
+		
+	return (qoff & MASK_SIN ? -g : g);
+}
+
+double d_sin(double x)
+{
+	dnorm_t result = { 0 };
+
+	result.type 		= d_type( x );
+	result.f.w[ W0 ] 	= result.type;
+	
+	switch(result.type)
+	{
+		case(INF):
+		{
+			result.f.w[ W0 ] = NAN;
+			break;
+		}
+		
+		case(NAN):
+		{
+			result.f.w[ W0 ] = NAN;
+			break;
+		}
+		
+		case(GRADZ):
+		{
+			result.f.d = x;
+			break;
+		}
+		
+		case(ZERO):
+		{
+			result.f.d = 0.0;
+			break;
+		}
+
+		case(FINITE):
+		{
+			result.f.d = d_sin_impl(x,0);
+			break;
+		}
+		
+		default:
+		{
+			result.f.w[ W0 ] = NAN;
+		}
+	}
+
+	return ( result.f.d );
+}
+
+double d_cos(double x)
+{
+	return d_sin_impl(x,1);
+}
+
+/*
+ * ------------------------------------------
+ * |				TEST					|
+ * ------------------------------------------
+ */
 
 double sqrt(double x);
 
@@ -497,13 +672,71 @@ void test_exp( void )
 	}
 
 	assert( equal == total );
-//	printf("SQRT(x)^2 x = [%f, %f), equal: %d of %d, (%f x100)\n", xmin, xmax, equal, total, ((double)equal/(double)total)*100.0);
+
+	assert( d_exp(  0.    	) 	== 1.0 		); /* exp(  0 ) = 1 */
+	assert( d_exp( -1./0. 	) 	== 0.0 		); /* exp( -∞ ) = 0 */
+	assert( d_exp( +1./0. 	) 	== 1./0. 	); /* exp( +∞ ) = ∞ */
+	assert( d_exp( +1.e-320 ) 	== 1.0 		); /* exp( +u ) = 1 */
+	assert( d_exp( -1.e-320 ) 	== 1.0 		); /* exp( -u ) = 1 */
+	assert( d_exp( +1.e-16 ) 	== 1.0 		); /* exp( +o ) = 1 */
+	assert( d_exp( -1.e-16 ) 	== 1.0 		); /* exp( -o ) = 1 */
+}
+
+void test_sin( void )
+{
+	int total = 0;
+	int equal = 0;
+	
+	double xmin = -1.57079; /* -inf round -pi/2 */
+	double xmax = +1.57080; /* +inf round +pi/2 */
+	double delta = 0.0001;
+
+	for(double x = xmin; x < xmax; x+= delta)
+	{
+		total++;
+
+		volatile double zero  = d_sin( -x ) + d_sin( x );
+		double res =  zero;
+
+		res = res < 0.0 ? -res : res;
+
+		if ( res < 1.e-15 )
+		{
+			equal++;
+		}
+		else
+		{
+			printf("FAILED: exp(%.12f) = %.12f\n", x, d_exp(x)); 
+		}
+	}
+
+	assert( equal == total );
+
+	assert( d_sin(  0.    	) 	== 0.0 		); /* sin(  0 ) = 0 */
+	assert( d_sin( -1./0. 	) 	== 1.0 - 1.0); /* sin( -∞ ) = NaN */
+//	assert( d_sin( +1./0. 	) 	== 1./0. 	); /* sin( +∞ ) = ∞ */
+//	assert( d_sin( +1.e-320 ) 	== 1.0 		); /* sin( +u ) = 1 */
+//	assert( d_sin( -1.e-320 ) 	== 1.0 		); /* sin( -u ) = 1 */
+//	assert( d_sin( +1.e-16 ) 	== 1.0 		); /* sin( +o ) = 1 */
+//	assert( d_sin( -1.e-16 ) 	== 1.0 		); /* sin( -o ) = 1 */
 }
 
 double pow(double x, double y);
+double sin(double x);
 
 int main( void )
 {
+	double twobypi = 0.6366197723675813430755350;
+	double pi = 3.1415926535897932384;
+	double x = twobypi + 0.0001;
+
+	double g 	= x * twobypi; // g = x / 0.5pi
+	long quad 	= (long)(0 < g ? g + 0.5 : g - 0.5); //
+
+	printf("x = %f, g = %f, quad = %ld\n",x, g, quad );
+	
+	return 0;
+#if 0
 	printf("Testing _test(x)\n");
 
 	printf("TODO: review gradual underflow: sqrt(%.12e) = %.12e\n", 1.e-320, d_sqrt(1.e-320));
@@ -511,6 +744,7 @@ int main( void )
 	test_sqrt();
 	test_exp();
 	test_log();
+	test_sin();
 
 	double x;
 	dnorm_t xn;
@@ -539,5 +773,6 @@ int main( void )
 	xn = d_normalize(x);
 
 	return 0;
+#endif
 }
 
