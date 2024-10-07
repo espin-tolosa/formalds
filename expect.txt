@@ -1,0 +1,108 @@
+BTYPE0
+
+last: yes
+type: 0
+[INFO]: inflated without errors
+AAABCDEFGHIPQRSTUV
+
+BTYPE1
+
+last: yes
+type: 1
+lc: 499, symbol: 107
+lc: 499, symbol: 34
+lc: 499, symbol: 42
+lc: 499, symbol: 257
+lc: 517, len: 3
+lc: 521, symbol: 1
+lc: 499, symbol: 256
+[INFO]: inflated without errors
+k"*"*"
+
+BTYPE2
+
+last: yes
+type: 2
+lc: 499, symbol: 72
+lc: 499, symbol: 101
+lc: 499, symbol: 108
+lc: 499, symbol: 108
+lc: 499, symbol: 111
+lc: 499, symbol: 100
+lc: 499, symbol: 115
+lc: 499, symbol: 97
+lc: 499, symbol: 122
+lc: 499, symbol: 120
+lc: 499, symbol: 99
+lc: 499, symbol: 99
+lc: 499, symbol: 99
+lc: 499, symbol: 122
+lc: 499, symbol: 120
+lc: 499, symbol: 101
+lc: 499, symbol: 119
+lc: 499, symbol: 114
+lc: 499, symbol: 119
+lc: 499, symbol: 101
+lc: 499, symbol: 102
+lc: 499, symbol: 257
+lc: 517, len: 3
+lc: 521, symbol: 0
+lc: 499, symbol: 122
+lc: 499, symbol: 120
+lc: 499, symbol: 122
+lc: 499, symbol: 122
+lc: 499, symbol: 109
+lc: 499, symbol: 98
+lc: 499, symbol: 98
+lc: 499, symbol: 98
+lc: 499, symbol: 110
+lc: 499, symbol: 118
+lc: 499, symbol: 99
+lc: 499, symbol: 106
+lc: 499, symbol: 100
+lc: 499, symbol: 102
+lc: 499, symbol: 108
+lc: 499, symbol: 107
+lc: 499, symbol: 100
+lc: 499, symbol: 102
+lc: 499, symbol: 114
+lc: 499, symbol: 117
+lc: 499, symbol: 258
+lc: 517, len: 4
+lc: 521, symbol: 1
+lc: 499, symbol: 111
+lc: 499, symbol: 119
+lc: 499, symbol: 115
+lc: 499, symbol: 100
+lc: 499, symbol: 102
+lc: 499, symbol: 118
+lc: 499, symbol: 110
+lc: 499, symbol: 110
+lc: 499, symbol: 120
+lc: 499, symbol: 99
+lc: 499, symbol: 118
+lc: 499, symbol: 110
+lc: 499, symbol: 120
+lc: 499, symbol: 110
+lc: 499, symbol: 257
+lc: 517, len: 3
+lc: 521, symbol: 0
+lc: 499, symbol: 103
+lc: 499, symbol: 103
+lc: 499, symbol: 104
+lc: 499, symbol: 103
+lc: 499, symbol: 104
+lc: 499, symbol: 257
+lc: 517, len: 3
+lc: 521, symbol: 0
+lc: 499, symbol: 258
+lc: 517, len: 4
+lc: 521, symbol: 4
+lc: 499, symbol: 106
+lc: 499, symbol: 108
+lc: 499, symbol: 108
+lc: 499, symbol: 97
+lc: 499, symbol: 113
+lc: 499, symbol: 256
+[INFO]: inflated without errors
+Hellodsazxccczxewrweffffzxzzmbbbnvcjdflkdfrururuowsdfvnnxcvnxnnnngghghhhhghhhjllaq
