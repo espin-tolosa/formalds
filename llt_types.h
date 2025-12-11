@@ -1,6 +1,9 @@
 #ifndef LLT_TYPES_H
 #define LLT_TYPES_H
 
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
 typedef unsigned int LLT_COFF;
 typedef unsigned int LLT_CLEN;
 
@@ -32,6 +35,18 @@ typedef struct
 #define LLT_TUID_OPEN_LEN  ( sizeof( LLT_TUID_OPEN  ) - 1Ull )
 #define LLT_TUID_CLOSE_LEN ( sizeof( LLT_TUID_CLOSE ) - 1Ull )
 
-extern LLT_TUID llt_find_tuid( const LLT_CSTRING * src, LLT_COFF from );
+extern LLT_TUID     llt_find_tuid_by_value( const char * fname, LLT_TUID_VALUE value );
+extern int          llt_tuid_check( const char * fname );
+extern LLT_CSTRING  llt_load_file_as_cstring ( const char * path );
+extern LLT_TUID     llt_find_tuid( const LLT_CSTRING * src, LLT_COFF from );
+
+/*
+ * Use cases
+ */
+
+extern int llt_use_case_trace_check( const char * path );
+extern int llt_use_case_find_trace( const char * path, int id );
+extern int llt_use_case_erase_trace( const char * path, int id );
+extern int llt_use_case_erase_trace_v2( const char * path, int id );
 
 #endif

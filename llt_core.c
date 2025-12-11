@@ -65,7 +65,7 @@ extern LLT_TUID llt_find_tuid( const LLT_CSTRING * src, LLT_COFF from )
     return ( ret );
 }
 
-LLT_CSTRING llt_load_file_as_cstring ( const char * path )
+extern LLT_CSTRING llt_load_file_as_cstring ( const char * path )
 {
     LLT_CSTRING result = { 0 };
 
@@ -123,7 +123,7 @@ LLT_CSTRING llt_load_file_as_cstring ( const char * path )
     return result;
 }
 
-extern int main_check( const char * fname )
+extern int llt_tuid_check( const char * fname )
 {
     static LLT_TUID tuid_list[ 10000 ] = { 0 };
     static int tuid_len = 0;
@@ -190,32 +190,71 @@ extern int main_check( const char * fname )
 
     while( ( merges != 0 ) && ( tuid_len != 0 ) );
 
-    for( int i = 0; i < tuid_len; ++i )
-    {
-        printf( "[ %3d ] = %+d\n", i, tuid_list[ i ].value );
-    }
+    //TODO: check algorithm needs to rebalance groups of TUIDS of the same sign, until it is done,
+    //      this commented code can help to debug some hard cases
+    //for( int i = 0; i < tuid_len; ++i )
+    //{
+    //    printf( "[ %3d ] = %+d\n", i, tuid_list[ i ].value );
+    //}
 
     return ( id_check );
+}
+
+extern LLT_TUID llt_find_tuid_by_value( const char * fname, LLT_TUID_VALUE value )
+{
+    LLT_TUID ret =
+    {
+        .coff   = LLT_NULL_COFF,
+        .type   = LLT_TUID_TYPE_NULL,
+        .value  = LLT_NULL_TUID_VALUE,
+    };
+
+    LLT_CSTRING csrc        = llt_load_file_as_cstring( fname );
+
+    LLT_TUID id_offset_prev = { .coff = 0, /* */ };
+    LLT_TUID id_offset_curr = { .coff = 0, /* */ };
+
+    do
+    {
+        id_offset_prev = id_offset_curr;
+
+        id_offset_curr = llt_find_tuid( &csrc, id_offset_prev.coff );
+
+        if( id_offset_curr.value == value )
+        {
+            ret = id_offset_curr;
+        }
+
+        else
+        {
+            /* NOP: continue searching */
+        }
+    }
+
+    while
+    (
+        ( id_offset_prev.coff   <   id_offset_curr.coff ) &&
+        ( id_offset_curr.coff   !=  LLT_NULL_COFF       ) &&
+        ( ret.coff              ==  LLT_NULL_COFF       )
+    );
+
+    return ( ret );
 }
 
 int main( int argc, char ** argv )
 {
     if( argc > 1 )
     {
-        const int balance = main_check( argv[ 1 ] );
+        (void) llt_use_case_trace_check( argv[ 1 ] );
 
-        if( balance == 0 )
-        {
-            printf( "Test PASSED: %s (LLTraced is balanced)\n", argv[ 1 ] );
-        }
+        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
 
-        else
-        {
-            printf( "Test FAILED: %d\n", balance );
-        }
+        (void) llt_use_case_erase_trace( argv[ 1 ], 40 );
+        (void) llt_use_case_erase_trace( argv[ 1 ], 41 );
+        (void) llt_use_case_erase_trace( argv[ 1 ], 42 );
 
+        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
     }
-
 
     return ( 0 );
 }
