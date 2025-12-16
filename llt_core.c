@@ -139,7 +139,9 @@ extern int llt_tuid_check( const char * fname )
     {
         id_offset_prev = id_offset_curr;
 
-        id_offset_curr = llt_find_tuid( &csrc, id_offset_prev.coff );
+        id_offset_curr      = llt_find_tuid( &csrc, id_offset_prev.coff );
+
+        strcpy( id_offset_curr.path, fname );
 
         if( id_offset_curr.value != LLT_NULL_TUID_VALUE )
         {
@@ -243,17 +245,22 @@ extern LLT_TUID llt_find_tuid_by_value( const char * fname, LLT_TUID_VALUE value
 
 int main( int argc, char ** argv )
 {
-    if( argc > 1 )
+    if( argc > 2 )
     {
-        (void) llt_use_case_trace_check( argv[ 1 ] );
+//        (void) llt_use_case_trace_check( argv[ 1 ] );
+//
+//        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
+//
+//        (void) llt_use_case_erase_trace( argv[ 1 ], 40 );
+//        (void) llt_use_case_erase_trace( argv[ 1 ], 41 );
+//        (void) llt_use_case_erase_trace( argv[ 1 ], 42 );
+//
+//        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
 
-        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
+        LLT_TUID_VEC * tuids;
 
-        (void) llt_use_case_erase_trace( argv[ 1 ], 40 );
-        (void) llt_use_case_erase_trace( argv[ 1 ], 41 );
-        (void) llt_use_case_erase_trace( argv[ 1 ], 42 );
-
-        (void) llt_use_case_find_trace( argv[ 1 ], 40 );
+        tuids = llt_use_case_push_tuids( argv[ 2 ] );
+        tuids = llt_use_case_match_tuids( tuids );
     }
 
     return ( 0 );
